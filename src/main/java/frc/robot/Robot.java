@@ -8,12 +8,23 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.SparkMaxPIDController;
 
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.motorcontrol.Talon;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.TalonSRXControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+
+
+
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -30,9 +41,20 @@ public class Robot extends TimedRobot {
   CANSparkMax leftRear = new CANSparkMax (Constants.DrivetrainConstants.kLeftRearID, MotorType.kBrushless);
   CANSparkMax rightRear = new CANSparkMax (Constants.DrivetrainConstants.kRightRearID, MotorType.kBrushless);
 
-  XboxController driver = new XboxController(0);
+  //TalonFX shooter1 = new TalonFX(4);
+  //TalonFX shooter2 = new TalonFX(21);
+
+  TalonSRX shooter1 = new TalonSRX(4);
+  TalonSRX shooter2 = new TalonSRX(21);
 
   
+
+
+
+  XboxController driver = new XboxController(0);
+  XboxController operator = new XboxController(1);
+
+  Timer shooterDelay = new Timer();
 
 
   // private RobotContainer m_robotContainer;
@@ -51,6 +73,21 @@ public class Robot extends TimedRobot {
     leftRear.restoreFactoryDefaults();
     rightFront.restoreFactoryDefaults();
     rightRear.restoreFactoryDefaults();
+
+    TalonFXConfiguration shooter1_configs = new TalonFXConfiguration();
+    TalonFXConfiguration shooter2_configs = new TalonFXConfiguration();
+
+    /* Voltage-based velocity requires a feed forward to account for the back-emf of the motor */
+    //shooter1_configs.MotorOutput.Inverted = ;
+    //shooter1_configs.MotorOutput.NeutralMode. = ;
+
+
+
+    //shooter1.getConfigurator().apply(shooter1_configs);
+    //shooter2.getConfigurator().apply(shooter2_configs);
+    shooter1.configFactoryDefault();
+    shooter2.configFactoryDefault();
+
 
     leftFront.setInverted(true);
     leftRear.setInverted(true);
@@ -107,15 +144,65 @@ public class Robot extends TimedRobot {
     // this line or comment it out.
     // if (m_autonomousCommand != null) {
     //   m_autonomousCommand.cancel();
-    // }
+    // }\
   }
 
   /** This function is called periodically during operator control. */
   @Override
-  public void teleopPeriodic() {
-    leftFront.set(-driver.getLeftY());
-    rightFront.set(-driver.getRightY());
+  public void teleopPeriodic() {    
+    // leftFront.set(-driver.getLeftY());
+    // rightFront.set(-driver.getRightY());
+    SmartDashboard.putNumber("shooter 1", shooter1.getMotorOutputPercent());
+    SmartDashboard.putNumber("shooter 2", shooter2.getMotorOutputPercent());
+    if (Math.abs(driver.getLeftY()) > 0.05){
+      leftFront.set(-driver.getLeftY());
+      rightFront.set(-driver.getLeftY());
+    }
+    else if (Math.abs(driver.getRightX()) > 0.05){
+      leftFront.set(-driver.getRightX());
+      rightFront.set(driver.getRightX());
+    }
+    else {
+      leftFront.set(0);
+      rightFront.set(0);
+    }
+    
+
+
+
+  if (Math.abs(driver.getLeftTriggerAxis()) > 0.1){
+    
+    shooter1.set(TalonSRXControlMode.PercentOutput, driver.getLeftTriggerAxis());
+
+    if (shooter1.getMotorOutputPercent() == 1){
+      shooter2.set(TalonSRXControlMode.PercentOutput, driver.getLeftTriggerAxis());
+    }
+    
+   // shooter2.set(TalonSRXControlMode.PercentOutput, 20);
+    //shooter1.set(TalonSRXControlMode.PercentOutput, 20);
   }
+  else if (Math.abs(driver.getRightTriggerAxis()) > 0.1) {
+    shooter1.set(TalonSRXControlMode.PercentOutput, -driver.getRightTriggerAxis());
+    shooter2.set(TalonSRXControlMode.PercentOutput, -driver.getRightTriggerAxis());
+  }
+  else {
+    shooter1.set(TalonSRXControlMode.PercentOutput, 0);
+    shooter2.set(TalonSRXControlMode.PercentOutput, 0);
+  }
+  if (Math.abs(driver.getLeftTriggerAxis()) > 0.5){
+    shooter1.set(TalonSRXControlMode.PercentOutput, 1);
+    shooter2.set(TalonSRXControlMode.PercentOutput, 1);
+  }
+  
+
+
+  
+
+
+  
+
+  }
+
 
 
   @Override
