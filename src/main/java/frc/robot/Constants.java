@@ -23,7 +23,11 @@ public final class Constants {
   public static class DrivetrainConstants {
     // PWM ports/CAN IDs for motor controllers
     public static final int kLeftRearID = 3;
+<<<<<<< HEAD
     public static final int kLeftFrontID = 6;
+=======
+    public static final int kLeftFrontID = 4;
+>>>>>>> fcadb10dab49022a08cf52914c5dffd82060a68e
     public static final int kRightRearID = 2;
     public static final int kRightFrontID = 5;
 
