@@ -22,6 +22,10 @@ public class PWMDrivetrain extends SubsystemBase {
   /*Class member variables. These variables represent things the class needs to keep track of and use between
   different method calls. */
   DifferentialDrive m_drivetrain;
+  PWMSparkMax leftFrontMotor;
+  PWMSparkMax leftRearMotor;
+  PWMSparkMax rightFrontMotor;
+  PWMSparkMax rightRearMotor;
 
   /*Constructor. This method is called when an instance of the class is created. This should generally be used to set up
    * member variables and perform any configuration or set up necessary on hardware.
@@ -31,17 +35,17 @@ public class PWMDrivetrain extends SubsystemBase {
      * as we will not need to reference them directly anymore after we put them into a DifferentialDrive.
      */
 
-    PWMSparkMax leftFrontMotor = new PWMSparkMax(kLeftFrontID);
-    PWMSparkMax leftRearMotor = new PWMSparkMax(kLeftRearID);
-    PWMSparkMax rightFrontMotor = new PWMSparkMax(kRightFrontID);
-    PWMSparkMax rightRearMotor = new PWMSparkMax(kRightRearID);
+    leftFrontMotor = new PWMSparkMax(kLeftFrontID);
+    leftRearMotor = new PWMSparkMax(kLeftRearID);
+    rightFrontMotor = new PWMSparkMax(kRightFrontID);
+    rightRearMotor = new PWMSparkMax(kRightRearID);
 
     leftFrontMotor.addFollower(leftRearMotor);
     leftRearMotor.setInverted(true);
     leftFrontMotor.setInverted(false);
     rightFrontMotor.addFollower(rightRearMotor);
-    rightRearMotor.setInverted(true);
-    rightFrontMotor.setInverted(false);
+    leftRearMotor.setInverted(true);
+    leftFrontMotor.setInverted(false);
 
     // Put our controller groups into a DifferentialDrive object. This object represents all 4 motor
     // controllers in the drivetrain
