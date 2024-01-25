@@ -8,20 +8,15 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.SparkMaxPIDController;
 
 import edu.wpi.first.wpilibj.TimedRobot;
-<<<<<<< HEAD
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-=======
-import edu.wpi.first.wpilibj.XboxController;
->>>>>>> fcadb10dab49022a08cf52914c5dffd82060a68e
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
-<<<<<<< HEAD
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -30,8 +25,6 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 
 
-=======
->>>>>>> fcadb10dab49022a08cf52914c5dffd82060a68e
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -48,20 +41,15 @@ public class Robot extends TimedRobot {
   CANSparkMax leftRear = new CANSparkMax (Constants.DrivetrainConstants.kLeftRearID, MotorType.kBrushless);
   CANSparkMax rightRear = new CANSparkMax (Constants.DrivetrainConstants.kRightRearID, MotorType.kBrushless);
 
-<<<<<<< HEAD
   //TalonFX shooter1 = new TalonFX(4);
   //TalonFX shooter2 = new TalonFX(21);
 
   TalonSRX shooter1 = new TalonSRX(4);
   TalonSRX shooter2 = new TalonSRX(21);
-=======
-  XboxController driver = new XboxController(0);
->>>>>>> fcadb10dab49022a08cf52914c5dffd82060a68e
 
   
 
 
-<<<<<<< HEAD
 
   XboxController driver = new XboxController(0);
   XboxController operator = new XboxController(1);
@@ -69,8 +57,6 @@ public class Robot extends TimedRobot {
   Timer shooterDelay = new Timer();
 
 
-=======
->>>>>>> fcadb10dab49022a08cf52914c5dffd82060a68e
   // private RobotContainer m_robotContainer;
 
   /**
@@ -88,7 +74,6 @@ public class Robot extends TimedRobot {
     rightFront.restoreFactoryDefaults();
     rightRear.restoreFactoryDefaults();
 
-<<<<<<< HEAD
     TalonFXConfiguration shooter1_configs = new TalonFXConfiguration();
     TalonFXConfiguration shooter2_configs = new TalonFXConfiguration();
 
@@ -104,8 +89,6 @@ public class Robot extends TimedRobot {
     shooter2.configFactoryDefault();
 
 
-=======
->>>>>>> fcadb10dab49022a08cf52914c5dffd82060a68e
     leftFront.setInverted(true);
     leftRear.setInverted(true);
     rightRear.setInverted(false);
@@ -161,16 +144,11 @@ public class Robot extends TimedRobot {
     // this line or comment it out.
     // if (m_autonomousCommand != null) {
     //   m_autonomousCommand.cancel();
-<<<<<<< HEAD
     // }\
-=======
-    // }
->>>>>>> fcadb10dab49022a08cf52914c5dffd82060a68e
   }
 
   /** This function is called periodically during operator control. */
   @Override
-<<<<<<< HEAD
   public void teleopPeriodic() {    
     // leftFront.set(-driver.getLeftY());
     // rightFront.set(-driver.getRightY());
@@ -225,12 +203,6 @@ public class Robot extends TimedRobot {
 
   }
 
-=======
-  public void teleopPeriodic() {
-    leftFront.set(-driver.getLeftY());
-    rightFront.set(-driver.getRightY());
-  }
->>>>>>> fcadb10dab49022a08cf52914c5dffd82060a68e
 
 
   @Override
