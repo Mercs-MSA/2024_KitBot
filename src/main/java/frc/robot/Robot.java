@@ -1,3 +1,4 @@
+
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
@@ -22,7 +23,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.TalonSRXControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
- 
+
 
 
 
@@ -46,7 +47,7 @@ public class Robot extends TimedRobot {
 
   TalonSRX shooter1 = new TalonSRX(4);
   TalonSRX shooter2 = new TalonSRX(21);
-
+  TalonSRX amp = new TalonSRX(16);
   
 
 
@@ -55,6 +56,15 @@ public class Robot extends TimedRobot {
   XboxController operator = new XboxController(1);
 
   Timer shooterDelay = new Timer();
+
+  Timer autoTimer =  new Timer();
+
+  boolean shooterDelayReached = false;
+
+  boolean precisonMode = false;
+
+  final double precisionSpeed = 0.35;
+
 
 
   // private RobotContainer m_robotContainer;
@@ -76,8 +86,9 @@ public class Robot extends TimedRobot {
 
     TalonFXConfiguration shooter1_configs = new TalonFXConfiguration();
     TalonFXConfiguration shooter2_configs = new TalonFXConfiguration();
+    TalonFXConfiguration anp_configs = new TalonFXConfiguration();
 
-    /* Voltage-based velocity requires a feed forward to account for the back-emf of the motor */
+    /* Voltage-based velocity requires a feed forward to account for the back-em 5f of the motor */
     //shooter1_configs.MotorOutput.Inverted = ;
     //shooter1_configs.MotorOutput.NeutralMode. = ;
 
@@ -134,8 +145,27 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically during autonomous. */
   @Override
-  public void autonomousPeriodic() {}
-
+  public void autonomousPeriodic() {
+  
+//     if (autoTimer.get() < 1)
+//     rightFront.set(-0.10);
+//     rightRear.set(-0.10);
+//     leftFront.set(-0.10);
+//     leftRear.set(-10);
+//     else
+//    {rightFront.set(0);  
+//           leftFront.set(0);
+//  if (autoTimer.get() < 1 && shooterDelay.get() > 0.3){
+//       shooter1.set(TalonSRXControlMode.PercentOutput, 1);
+//       shooter2.set(TalonSRXControlMode.PercentOutput, 1);
+//     }
+//       else {shooter1.set(TalonSRXControlMode.PercentOutput, 0);
+//             shooter2.set(TalonSRXControlMode.PercentOutput, 0);
+//     autoTimer.reset();
+//     autoTimer.start();
+//       }
+//   }
+  }
   @Override
   public void teleopInit() {
     // This makes sure that the autonomous stops running when
@@ -151,65 +181,98 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {    
     // leftFront.set(-driver.getLeftY());
-    // rightFront.set(-driver.getRightY());
+     //rightFront.set(-driver.getRightY());
     SmartDashboard.putNumber("shooter 1", shooter1.getMotorOutputPercent());
     SmartDashboard.putNumber("shooter 2", shooter2.getMotorOutputPercent());
-    if (Math.abs(driver.getLeftY()) > 0.05){
-      leftFront.set(-driver.getLeftY());
-      rightFront.set(-driver.getLeftY());
+    SmartDashboard.putBoolean("precisonMode", precisonMode);
+  
+    
+
+    if ((precisonMode == false) && (driver.getBackButtonPressed())) {
+        precisonMode = true;
     }
-    else if (Math.abs(driver.getRightX()) > 0.05){
-      leftFront.set(-driver.getRightX());
-      rightFront.set(driver.getRightX());
+    else if ((precisonMode == true) && (driver.getBackButtonPressed())) {
+        precisonMode = false;
+    }
+
+    if (precisonMode) {
+      if (Math.abs(driver.getLeftY()) > 0.05){
+        leftFront.set(-1*precisionSpeed*driver.getLeftY());
+        rightFront.set(-1*precisionSpeed*driver.getLeftY());
+      }
+      else if (Math.abs(driver.getRightX()) > 0.05){
+        leftFront.set(-1*precisionSpeed*driver.getRightX());
+        rightFront.set(precisionSpeed*driver.getRightX());
+      }
+      else {
+        leftFront.set(0);
+        rightFront.set(0);
+      }
+    }
+      else
+      if (Math.abs(driver.getLeftY()) > 0.05){
+        leftFront.set(-driver.getLeftY());
+        rightFront.set(-driver.getLeftY());
+      }
+      else if (Math.abs(driver.getRightX()) > 0.05){
+        leftFront.set(-driver.getRightX());
+        rightFront.set(driver.getRightX());
+      }
+      else {
+        leftFront.set(0);
+        rightFront.set(0);
+      }
+    // if (Math.abs(driver.getLeftY() && (Math.abs(driver.getRightX() > 0.05 )) )  )   
+
+  if (driver.getRawButton(5)){
+    shooter1.set(TalonSRXControlMode.PercentOutput, -0.75);
+    shooter2.set(TalonSRXControlMode.PercentOutput, -0.75);
+  }
+
+
+  else if (driver.getRawButton(6)){
+    shooter1.set(TalonSRXControlMode.PercentOutput, 1);
+    shooterDelay.start();
+    if (shooterDelay.get() > 0.4){
+      shooterDelayReached = true;
     }
     else {
-      leftFront.set(0);
-      rightFront.set(0);
+      shooterDelayReached = false;
     }
-    
-
-
-
-  if (Math.abs(driver.getLeftTriggerAxis()) > 0.1){
-    
-    shooter1.set(TalonSRXControlMode.PercentOutput, driver.getLeftTriggerAxis());
-
-    if (shooter1.getMotorOutputPercent() == 1){
-      shooter2.set(TalonSRXControlMode.PercentOutput, driver.getLeftTriggerAxis());
+    if (shooterDelayReached){
+      shooter2.set(TalonSRXControlMode.PercentOutput, 1);
     }
-    
-   // shooter2.set(TalonSRXControlMode.PercentOutput, 20);
-    //shooter1.set(TalonSRXControlMode.PercentOutput, 20);
-  }
-  else if (Math.abs(driver.getRightTriggerAxis()) > 0.1) {
-    shooter1.set(TalonSRXControlMode.PercentOutput, -driver.getRightTriggerAxis());
-    shooter2.set(TalonSRXControlMode.PercentOutput, -driver.getRightTriggerAxis());
+    else {
+
+      shooter2.set(TalonSRXControlMode.PercentOutput, 0);
+    }
+
+
   }
   else {
     shooter1.set(TalonSRXControlMode.PercentOutput, 0);
     shooter2.set(TalonSRXControlMode.PercentOutput, 0);
-  }
-  if (Math.abs(driver.getLeftTriggerAxis()) > 0.5){
-    shooter1.set(TalonSRXControlMode.PercentOutput, 1);
-    shooter2.set(TalonSRXControlMode.PercentOutput, 1);
+        SmartDashboard.putNumber("shooter delay timer", shooterDelay.get());
+    shooterDelay.reset();
+    shooterDelayReached = false;
   }
   
-
-
-  
-
-
-  
-
+    if (driver.getRawButton(1)){
+    amp.set(TalonSRXControlMode.PercentOutput,1);
+     } else if (driver.getRawButton(3)){
+    amp.set(TalonSRXControlMode.PercentOutput,-0.35);
   }
-
-
-
-  @Override
-  public void testInit() {
+    else {
+    amp.set(TalonSRXControlMode.PercentOutput,0);
+    }
+  }
+    
+    
+    @Override
+  public void testInit() {}
     // Cancels all running commands at the start of test mode.
     // CommandScheduler.getInstance().cancelAll();
-  }
+  
 
   /** This function is called periodically during test mode. */
   @Override
@@ -219,7 +282,13 @@ public class Robot extends TimedRobot {
   @Override
   public void simulationInit() {}
 
-  /** This function is called periodically whilst in simulation. */
-  @Override
-  public void simulationPeriodic() {}
+
+
+  // This function is called periodically whilst in simulation. */
+   @Override
+   public void simulationPeriodic() {}
+
 }
+
+
+
