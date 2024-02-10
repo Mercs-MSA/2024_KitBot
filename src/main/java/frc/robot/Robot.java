@@ -1,4 +1,5 @@
 
+
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
@@ -41,6 +42,8 @@ public class Robot extends TimedRobot {
   CANSparkMax rightFront = new CANSparkMax (Constants.DrivetrainConstants.kRightFrontID, MotorType.kBrushless);
   CANSparkMax leftRear = new CANSparkMax (Constants.DrivetrainConstants.kLeftRearID, MotorType.kBrushless);
   CANSparkMax rightRear = new CANSparkMax (Constants.DrivetrainConstants.kRightRearID, MotorType.kBrushless);
+  //CANSparkMax Climber = new CANSparkMax (Constants.DrivetrainConstants.kClimberID, MotorType.kBrushless);
+
 
   //TalonFX shooter1 = new TalonFX(4);
   //TalonFX shooter2 = new TalonFX(21);
@@ -61,7 +64,7 @@ public class Robot extends TimedRobot {
 
   boolean shooterDelayReached = false;
 
-  boolean precisonMode = false;
+  boolean precisonMode = true;
 
   final double precisionSpeed = 0.35;
 
@@ -188,19 +191,19 @@ public class Robot extends TimedRobot {
   
     
 
-    if ((precisonMode == false) && (driver.getBackButtonPressed())) {
+    if ((precisonMode == false) && (driver.getYButton())) {
         precisonMode = true;
     }
-    else if ((precisonMode == true) && (driver.getBackButtonPressed())) {
+    else if ((precisonMode == true) && (driver.getBButton())) {
         precisonMode = false;
     }
 
     if (precisonMode) {
-      if (Math.abs(driver.getLeftY()) > 0.05){
+      if (Math.abs(driver.getLeftY()) > 0.1){
         leftFront.set(-1*precisionSpeed*driver.getLeftY());
         rightFront.set(-1*precisionSpeed*driver.getLeftY());
       }
-      else if (Math.abs(driver.getRightX()) > 0.05){
+      else if (Math.abs(driver.getRightX()) > 0.1){
         leftFront.set(-1*precisionSpeed*driver.getRightX());
         rightFront.set(precisionSpeed*driver.getRightX());
       }
@@ -209,20 +212,56 @@ public class Robot extends TimedRobot {
         rightFront.set(0);
       }
     }
+      // else
+      // if (Math.abs(driver.getLeftY()) > 0.05){
+      //   leftFront.set(-driver.getLeftY());
+      //   rightFront.set(-driver.getLeftY());
+      // }
+      // else if (Math.abs(driver.getRightX()) > 0.05){
+      //   leftFront.set(-driver.getRightX());
+      //   rightFront.set(driver.getRightX());
+      // }
+      // else {
+      //   leftFront.set(0);
+      //   rightFront.set(0);
+      // }
       else
-      if (Math.abs(driver.getLeftY()) > 0.05){
-        leftFront.set(-driver.getLeftY());
-        rightFront.set(-driver.getLeftY());
+    if (Math.abs(driver.getLeftY()) > 0.1 && Math.abs(driver.getRightX()) > 0.1){
+      if (-driver.getRightX() > 0.1 ){
+        rightFront.set(0.15);
+        leftFront.set(0.3);
       }
-      else if (Math.abs(driver.getRightX()) > 0.05){
-        leftFront.set(-driver.getRightX());
-        rightFront.set(driver.getRightX());
+    } else if (Math.abs(driver.getLeftY()) > 0.1 && (driver.getRightX()) > 0.1){
+      if (driver.getRightX() > 0.1 ){
+        rightFront.set(0.3);
+        leftFront.set(0.15);
       }
-      else {
-        leftFront.set(0);
-        rightFront.set(0);
-      }
-    // if (Math.abs(driver.getLeftY() && (Math.abs(driver.getRightX() > 0.05 )) )  )   
+    } else if (Math.abs(driver.getLeftY()) > 0.1 && Math.abs(driver.getRightX()) < 0.1) {
+      leftFront.set(-driver.getLeftY());
+      rightFront.set(-driver.getLeftY());
+    } else if (Math.abs(driver.getLeftY()) < 0.1 && Math.abs(driver.getRightX()) > 0.1) {
+      leftFront.set(-driver.getRightX());
+      rightFront.set(driver.getRightX());
+    }   else {
+      leftFront.set(0);
+      rightFront.set(0);
+    }
+    //BACKCURVE
+    // else if ((driver.getLeftY()) < -0.1 && Math.abs(driver.getRightX()) > 0.1){
+    //   if (-driver.getRightX() > 0.1 ){
+    //     rightFront.set(-0.15);
+    //     leftFront.set(-0.3);
+    //   }
+    // }
+    // if ((driver.getLeftY()) < -0.1 && (driver.getRightX()) > 0.1){
+    //   if (driver.getRightX() > 0.1 ){
+    //     rightFront.set(-0.3);
+    //     leftFront.set(-0.15);
+    
+  // if ((driver.getLeftY() > 0.05 && (driver.getRightX() > 0.05))) {
+  //     leftFront.set(-0.15);
+  //     rightFront.set(0.3);
+  // }
 
   if (driver.getRawButton(5)){
     shooter1.set(TalonSRXControlMode.PercentOutput, -0.75);
@@ -262,10 +301,17 @@ public class Robot extends TimedRobot {
      } else if (driver.getRawButton(3)){
     amp.set(TalonSRXControlMode.PercentOutput,-0.35);
   }
+  // This section is for 
     else {
     amp.set(TalonSRXControlMode.PercentOutput,0);
     }
-  }
+  //  if (driver.getRawButton(9)){
+  //  Climber.set(1);
+  //  }
+  //  if (driver.getRawButton(10));
+  //   Climber.setInverted(true);
+  //   Climber.set(1);
+   }
     
     
     @Override
@@ -289,6 +335,5 @@ public class Robot extends TimedRobot {
    public void simulationPeriodic() {}
 
 }
-
 
 
