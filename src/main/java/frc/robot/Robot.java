@@ -1,5 +1,3 @@
-
-
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
@@ -18,7 +16,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.SparkMaxPIDController;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import com.revrobotics.RelativeEncoder;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -42,7 +42,7 @@ public class Robot extends TimedRobot {
   CANSparkMax rightFront = new CANSparkMax (Constants.DrivetrainConstants.kRightFrontID, MotorType.kBrushless);
   CANSparkMax leftRear = new CANSparkMax (Constants.DrivetrainConstants.kLeftRearID, MotorType.kBrushless);
   CANSparkMax rightRear = new CANSparkMax (Constants.DrivetrainConstants.kRightRearID, MotorType.kBrushless);
-  //CANSparkMax Climber = new CANSparkMax (Constants.DrivetrainConstants.kClimberID, MotorType.kBrushless);
+  CANSparkMax Climber = new CANSparkMax (Constants.DrivetrainConstants.kClimberID, MotorType.kBrushless);
 
 
   //TalonFX shooter1 = new TalonFX(4);
@@ -52,7 +52,9 @@ public class Robot extends TimedRobot {
   TalonSRX shooter2 = new TalonSRX(21);
   TalonSRX amp = new TalonSRX(16);
   
-
+  private SparkMaxPIDController m_pidController;
+  private RelativeEncoder m_encoder;
+  public double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput;
 
 
   XboxController driver = new XboxController(0);
@@ -64,14 +66,14 @@ public class Robot extends TimedRobot {
 
   boolean shooterDelayReached = false;
 
-  boolean precisonMode = true;
+  boolean precisonMode = false;
 
   final double precisionSpeed = 0.35;
 
 
 
   // private RobotContainer m_robotContainer;
-
+  
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -102,6 +104,27 @@ public class Robot extends TimedRobot {
     shooter1.configFactoryDefault();
     shooter2.configFactoryDefault();
 
+    m_pidController = Climber.getPIDController();
+
+    // Encoder object created to display position values
+    m_encoder = Climber.getEncoder();
+
+    // PID coefficients
+    kP = 0.5; 
+    kI = 0; //1e-4;
+    kD = 0; //1; 
+    kIz = 0; 
+    kFF = 0; 
+    kMaxOutput = 1; 
+    kMinOutput = -1;
+
+    // set PID coefficients
+    m_pidController.setP(kP);
+    m_pidController.setI(kI);
+    m_pidController.setD(kD);
+    m_pidController.setIZone(kIz);
+    m_pidController.setFF(kFF);
+    m_pidController.setOutputRange(kMinOutput, kMaxOutput);
 
     leftFront.setInverted(true);
     leftRear.setInverted(true);
@@ -126,6 +149,10 @@ public class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     //CommandScheduler.getInstance().run();
+    SmartDashboard.putNumber("shooter 1", shooter1.getMotorOutputPercent());
+    SmartDashboard.putNumber("shooter 2", shooter2.getMotorOutputPercent());
+    SmartDashboard.putBoolean("precisonMode", precisonMode);
+    SmartDashboard.putNumber("climber encoder position", Climber.getEncoder().getPosition());
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
@@ -183,21 +210,26 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {    
-    // leftFront.set(-driver.getLeftY());
-     //rightFront.set(-driver.getRightY());
-    SmartDashboard.putNumber("shooter 1", shooter1.getMotorOutputPercent());
-    SmartDashboard.putNumber("shooter 2", shooter2.getMotorOutputPercent());
-    SmartDashboard.putBoolean("precisonMode", precisonMode);
-  
-    
+     /*this is the start of code for tank drive */
 
-    if ((precisonMode == false) && (driver.getYButton())) {
+    // if (Math.abs(driver.getLeftY()) > 0.1) {
+    //   leftFront.set(driver.getLeftY());
+    // }
+
+    // else if (Math.abs(driver.getRightY()) > 0.1){
+    //   rightFront.set(driver.getRightX());
+    // }
+
+    /*this is the end of the code for tank drive */
+
+    /*start of arcade drive */
+
+    if ((precisonMode == false) && (driver.getRawButton(7))) {
         precisonMode = true;
     }
-    else if ((precisonMode == true) && (driver.getBButton())) {
+    else if ((precisonMode == true) && (driver.getRawButton(7))) {
         precisonMode = false;
     }
-
     if (precisonMode) {
       if (Math.abs(driver.getLeftY()) > 0.1){
         leftFront.set(-1*precisionSpeed*driver.getLeftY());
@@ -212,29 +244,18 @@ public class Robot extends TimedRobot {
         rightFront.set(0);
       }
     }
-      // else
-      // if (Math.abs(driver.getLeftY()) > 0.05){
-      //   leftFront.set(-driver.getLeftY());
-      //   rightFront.set(-driver.getLeftY());
-      // }
-      // else if (Math.abs(driver.getRightX()) > 0.05){
-      //   leftFront.set(-driver.getRightX());
-      //   rightFront.set(driver.getRightX());
-      // }
-      // else {
-      //   leftFront.set(0);
-      //   rightFront.set(0);
-      // }
-      else
-    if (Math.abs(driver.getLeftY()) > 0.1 && Math.abs(driver.getRightX()) > 0.1){
-      if (-driver.getRightX() > 0.1 ){
-        rightFront.set(0.15);
-        leftFront.set(0.3);
+    //turning left
+    else
+    if (Math.abs(driver.getLeftY()) > 0.1 && (driver.getRightX()) > 0.1){
+      if (Math.abs(driver.getRightX()) > 0.1 ){
+        rightFront.set(-driver.getLeftY());
+        leftFront.set(-driver.getLeftY()/2);
       }
+      //turning right
     } else if (Math.abs(driver.getLeftY()) > 0.1 && (driver.getRightX()) > 0.1){
-      if (driver.getRightX() > 0.1 ){
-        rightFront.set(0.3);
-        leftFront.set(0.15);
+      if (Math.abs(driver.getRightX()) > 0.1 ){
+        rightFront.set(driver.getLeftY()/2);
+        leftFront.set(driver.getLeftY());
       }
     } else if (Math.abs(driver.getLeftY()) > 0.1 && Math.abs(driver.getRightX()) < 0.1) {
       leftFront.set(-driver.getLeftY());
@@ -242,26 +263,12 @@ public class Robot extends TimedRobot {
     } else if (Math.abs(driver.getLeftY()) < 0.1 && Math.abs(driver.getRightX()) > 0.1) {
       leftFront.set(-driver.getRightX());
       rightFront.set(driver.getRightX());
-    }   else {
+    } else {
       leftFront.set(0);
       rightFront.set(0);
     }
-    //BACKCURVE
-    // else if ((driver.getLeftY()) < -0.1 && Math.abs(driver.getRightX()) > 0.1){
-    //   if (-driver.getRightX() > 0.1 ){
-    //     rightFront.set(-0.15);
-    //     leftFront.set(-0.3);
-    //   }
-    // }
-    // if ((driver.getLeftY()) < -0.1 && (driver.getRightX()) > 0.1){
-    //   if (driver.getRightX() > 0.1 ){
-    //     rightFront.set(-0.3);
-    //     leftFront.set(-0.15);
-    
-  // if ((driver.getLeftY() > 0.05 && (driver.getRightX() > 0.05))) {
-  //     leftFront.set(-0.15);
-  //     rightFront.set(0.3);
-  // }
+
+  //   /*end of arcade drive */
 
   if (driver.getRawButton(5)){
     shooter1.set(TalonSRXControlMode.PercentOutput, -0.75);
@@ -305,14 +312,18 @@ public class Robot extends TimedRobot {
     else {
     amp.set(TalonSRXControlMode.PercentOutput,0);
     }
-  //  if (driver.getRawButton(9)){
-  //  Climber.set(1);
-  //  }
-  //  if (driver.getRawButton(10));
-  //   Climber.setInverted(true);
-  //   Climber.set(1);
+   if (driver.getBButton()){
+    //Climber.set(-1);
+    m_pidController.setReference(0, CANSparkMax.ControlType.kPosition);
    }
-    
+   else if (driver.getPOV()==180){
+    m_pidController.setReference(0, CANSparkMax.ControlType.kPosition);
+    //Climber.set(1);
+   } else {
+    m_pidController.setReference(0, CANSparkMax.ControlType.kPosition);
+      //Climber.set
+   }
+  }
     
     @Override
   public void testInit() {}
