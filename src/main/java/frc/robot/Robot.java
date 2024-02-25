@@ -14,9 +14,11 @@ import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-
+import edu.wpi.first.wpilibj.DigitalInput;
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.SparkMaxPIDController;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import com.revrobotics.RelativeEncoder;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -35,26 +37,44 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 public class Robot extends TimedRobot {
   // private Command m_autonomousCommand;\
 
+  private final DigitalInput noteSensor = new DigitalInput(8);
 
   CANSparkMax leftFront = new CANSparkMax(Constants.DrivetrainConstants.kLeftFrontID, MotorType.kBrushless);
   CANSparkMax rightFront = new CANSparkMax (Constants.DrivetrainConstants.kRightFrontID, MotorType.kBrushless);
   CANSparkMax leftRear = new CANSparkMax (Constants.DrivetrainConstants.kLeftRearID, MotorType.kBrushless);
   CANSparkMax rightRear = new CANSparkMax (Constants.DrivetrainConstants.kRightRearID, MotorType.kBrushless);
+  CANSparkMax climber = new CANSparkMax (Constants.DrivetrainConstants.kClimberID, MotorType.kBrushless);
+
 
   //TalonFX shooter1 = new TalonFX(4);
   //TalonFX shooter2 = new TalonFX(21);
 
   TalonSRX shooter1 = new TalonSRX(4);
   TalonSRX shooter2 = new TalonSRX(21);
-
+  TalonSRX amp = new TalonSRX(16);
   
-
+  private SparkMaxPIDController m_pidController;
+  private RelativeEncoder m_encoder;
+  public double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput;
 
 
   XboxController driver = new XboxController(0);
   XboxController operator = new XboxController(1);
 
   Timer shooterDelay = new Timer();
+
+  Timer autoTimer =  new Timer();
+
+  boolean shooterDelayReached = false;
+
+  boolean precisonMode = false;
+
+  final double precisionSpeed = 0.35;
+
+  double m_setpoint;
+
+  boolean noteLoaded = false;
+
 
 
   // private RobotContainer m_robotContainer;
@@ -73,11 +93,13 @@ public class Robot extends TimedRobot {
     leftRear.restoreFactoryDefaults();
     rightFront.restoreFactoryDefaults();
     rightRear.restoreFactoryDefaults();
+    climber.restoreFactoryDefaults();
 
     TalonFXConfiguration shooter1_configs = new TalonFXConfiguration();
     TalonFXConfiguration shooter2_configs = new TalonFXConfiguration();
+    TalonFXConfiguration anp_configs = new TalonFXConfiguration();
 
-    /* Voltage-based velocity requires a feed forward to account for the back-emf of the motor */
+    /* Voltage-based velocity requires a feed forward to account for the back-em 5f of the motor */
     //shooter1_configs.MotorOutput.Inverted = ;
     //shooter1_configs.MotorOutput.NeutralMode. = ;
 
@@ -88,6 +110,25 @@ public class Robot extends TimedRobot {
     shooter1.configFactoryDefault();
     shooter2.configFactoryDefault();
 
+    m_pidController = climber.getPIDController();
+
+    // Encoder object created to display position values
+    m_encoder = climber.getEncoder();
+
+    // PID coefficients
+    kP = 0.5; 
+    kI = 0; //1e-4;
+    kD = 0; //1; 
+    kIz = 0; 
+    kFF = 0; 
+
+    // set PID coefficients
+    m_pidController.setP(kP);
+    m_pidController.setI(kI);
+    m_pidController.setD(kD);
+    m_pidController.setIZone(kIz);
+    m_pidController.setFF(kFF);
+    m_pidController.setOutputRange(kMinOutput, kMaxOutput);
 
     leftFront.setInverted(true);
     leftRear.setInverted(true);
@@ -96,6 +137,7 @@ public class Robot extends TimedRobot {
 
     rightRear.follow(rightFront);
     leftRear.follow(leftFront);
+
   }
 
   /**
@@ -112,6 +154,11 @@ public class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     //CommandScheduler.getInstance().run();
+    SmartDashboard.putNumber("shooter 1", shooter1.getMotorOutputPercent());
+    SmartDashboard.putNumber("shooter 2", shooter2.getMotorOutputPercent());
+    SmartDashboard.putBoolean("precisonMode", precisonMode);
+    SmartDashboard.putNumber("climber encoder position", climber.getEncoder().getPosition());
+    SmartDashboard.putBoolean("shooter loaded?", noteSensor.get());
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
@@ -134,8 +181,27 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically during autonomous. */
   @Override
-  public void autonomousPeriodic() {}
-
+  public void autonomousPeriodic() {
+  
+//     if (autoTimer.get() < 1)
+//     rightFront.set(-0.10);
+//     rightRear.set(-0.10);
+//     leftFront.set(-0.10);
+//     leftRear.set(-10);
+//     else
+//    {rightFront.set(0);  
+//           leftFront.set(0);
+//  if (autoTimer.get() < 1 && shooterDelay.get() > 0.3){
+//       shooter1.set(TalonSRXControlMode.PercentOutput, 1);
+//       shooter2.set(TalonSRXControlMode.PercentOutput, 1);
+//     }
+//       else {shooter1.set(TalonSRXControlMode.PercentOutput, 0);
+//             shooter2.set(TalonSRXControlMode.PercentOutput, 0);
+//     autoTimer.reset();
+//     autoTimer.start();
+//       }
+//   }
+  }
   @Override
   public void teleopInit() {
     // This makes sure that the autonomous stops running when
@@ -150,66 +216,156 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {    
-    // leftFront.set(-driver.getLeftY());
-    // rightFront.set(-driver.getRightY());
-    SmartDashboard.putNumber("shooter 1", shooter1.getMotorOutputPercent());
-    SmartDashboard.putNumber("shooter 2", shooter2.getMotorOutputPercent());
-    if (Math.abs(driver.getLeftY()) > 0.05){
-      leftFront.set(-driver.getLeftY());
-      rightFront.set(-driver.getLeftY());
+     /*this is the start of code for tank drive */
+
+    // if (Math.abs(driver.getLeftY()) > 0.1) {
+    //   leftFront.set(driver.getLeftY());
+    // }
+
+    // else if (Math.abs(driver.getRightY()) > 0.1){
+    //   rightFront.set(driver.getRightX());
+    // }
+
+    /*this is the end of the code for tank drive */
+
+    /*start of arcade drive */
+
+    if ((precisonMode == false) && (driver.getRawButton(7))) {
+        precisonMode = true;
     }
-    else if (Math.abs(driver.getRightX()) > 0.05){
-      leftFront.set(-driver.getRightX());
-      rightFront.set(driver.getRightX());
+    else if ((precisonMode == true) && (driver.getRawButton(7))) {
+        precisonMode = false;
+    }
+    if (precisonMode) {
+      if (Math.abs(driver.getLeftY()) > 0.1){
+        leftFront.set(-1*precisionSpeed*driver.getLeftY());
+        rightFront.set(-1*precisionSpeed*driver.getLeftY());
+      }
+      else if (Math.abs(driver.getRightX()) > 0.1){
+        leftFront.set(-1*precisionSpeed*driver.getRightX());
+        rightFront.set(precisionSpeed*driver.getRightX());
+      }
+      else {
+        leftFront.set(0);
+        rightFront.set(0);
+      }
+    } else {
+  
+      //ABDULLAH DRIVE CODE
+
+      if (Math.abs(driver.getLeftY()) > 0.1) { //If we are trying to MOVE
+        
+        if (Math.abs(driver.getRightX()) > 0.1) { //If we are trying to move + turn (CURVE)
+          
+          if (driver.getLeftY() < 0) {
+            if (driver.getRightX() > 0) { //If we are trying to curve RIGHT
+
+              rightFront.set(driver.getRightX()/3);
+              leftFront.set(0.1);
+            } else { //If we are trying to curve LEFT
+
+              rightFront.set(0.1);
+              leftFront.set(Math.abs(driver.getRightX()/3));
+            }
+          } else {
+            if (driver.getRightX() > 0) { //If we are trying to curve RIGHT
+
+              rightFront.set(-driver.getRightX()/3);
+              leftFront.set(-0.1);
+            } else { //If we are trying to curve LEFT
+
+              rightFront.set(-0.1);
+              leftFront.set(-Math.abs(driver.getRightX()/3));
+            }
+          }
+        } else { //If we are trying NOT trying to turn (FORWARD/BACKWARD)
+
+          leftFront.set(-driver.getLeftY()/4);
+          rightFront.set(-driver.getLeftY()/4);
+        }
+      } else if (Math.abs(driver.getRightX()) > 0.1) { //If we are trying to ROTATE (LEFT/RIGHT)
+
+          rightFront.set(driver.getRightX()/4);
+          leftFront.set(-driver.getRightX()/4);
+      } else { //If we are trying NOT trying to move (STATIONARY)
+
+          leftFront.set(0);
+          rightFront.set(0);
+      } 
+
+    }
+
+  //   /*end of arcade drive */
+
+  if (driver.getRawButton(5)){
+    shooter1.set(TalonSRXControlMode.PercentOutput, -0.75);
+    shooter2.set(TalonSRXControlMode.PercentOutput, -0.75);
+  }
+
+
+
+
+  else if (driver.getRawButton(6)){
+    shooter1.set(TalonSRXControlMode.PercentOutput, 1);
+    shooterDelay.start();
+    if (shooterDelay.get() > 0.4){
+      shooterDelayReached = true;
     }
     else {
-      leftFront.set(0);
-      rightFront.set(0);
+      shooterDelayReached = false;
     }
-    
-
-
-
-  if (Math.abs(driver.getLeftTriggerAxis()) > 0.1){
-    
-    shooter1.set(TalonSRXControlMode.PercentOutput, driver.getLeftTriggerAxis());
-
-    if (shooter1.getMotorOutputPercent() == 1){
-      shooter2.set(TalonSRXControlMode.PercentOutput, driver.getLeftTriggerAxis());
+    if (shooterDelayReached){
+      shooter2.set(TalonSRXControlMode.PercentOutput, 1);
     }
-    
-   // shooter2.set(TalonSRXControlMode.PercentOutput, 20);
-    //shooter1.set(TalonSRXControlMode.PercentOutput, 20);
-  }
-  else if (Math.abs(driver.getRightTriggerAxis()) > 0.1) {
-    shooter1.set(TalonSRXControlMode.PercentOutput, -driver.getRightTriggerAxis());
-    shooter2.set(TalonSRXControlMode.PercentOutput, -driver.getRightTriggerAxis());
+    else {
+
+      shooter2.set(TalonSRXControlMode.PercentOutput, 0);
+    }
+
+
   }
   else {
     shooter1.set(TalonSRXControlMode.PercentOutput, 0);
     shooter2.set(TalonSRXControlMode.PercentOutput, 0);
+        SmartDashboard.putNumber("shooter delay timer", shooterDelay.get());
+    shooterDelay.reset();
+    shooterDelayReached = false;
   }
-  if (Math.abs(driver.getLeftTriggerAxis()) > 0.5){
-    shooter1.set(TalonSRXControlMode.PercentOutput, 1);
-    shooter2.set(TalonSRXControlMode.PercentOutput, 1);
+  
+    if (driver.getRawButton(1)){
+    amp.set(TalonSRXControlMode.PercentOutput,-1);
+     } else if (driver.getRawButton(3)){
+    amp.set(TalonSRXControlMode.PercentOutput,0.35);
+  }
+  // This section is for 
+    else {
+    amp.set(TalonSRXControlMode.PercentOutput,0);
+    }
+  
+
+  //Climber code
+   if (driver.getPOV()==0){
+  climber.set(1);
+   }
+  else if (driver.getPOV()==180){
+    climber.set(-1);
+  
+   }  else {
+  climber.set(0);
+   }
+
+  
+  
   }
   
 
+    
 
-  
-
-
-  
-
-  }
-
-
-
-  @Override
-  public void testInit() {
+    @Override
+  public void testInit() {}
     // Cancels all running commands at the start of test mode.
     // CommandScheduler.getInstance().cancelAll();
-  }
+  
 
   /** This function is called periodically during test mode. */
   @Override
@@ -219,7 +375,11 @@ public class Robot extends TimedRobot {
   @Override
   public void simulationInit() {}
 
-  /** This function is called periodically whilst in simulation. */
-  @Override
-  public void simulationPeriodic() {}
+
+
+  // This function is called periodically whilst in simulation. */
+   @Override
+   public void simulationPeriodic() {}
+
 }
+

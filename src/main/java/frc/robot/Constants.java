@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+//import static frc.robot.Constants.DrivetrainConstants.kAmpID;
+
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
  * constants. This class should not be used for any other purpose. All constants should be declared
@@ -25,7 +27,8 @@ public final class Constants {
     public static final int kLeftRearID = 3;
     public static final int kLeftFrontID = 6;
     public static final int kRightRearID = 2;
-    public static final int kRightFrontID = 5;
+    public static final int kRightFrontID = 7;
+    public static final int kClimberID = 18;
 
     // Current limit for drivetrain motors
     public static final int kCurrentLimit = 60;
