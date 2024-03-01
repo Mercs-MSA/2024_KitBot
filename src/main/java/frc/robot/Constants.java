@@ -29,6 +29,8 @@ public final class Constants {
     public static final int kRightRearID = 2;
     public static final int kRightFrontID = 7;
     public static final int kClimberID = 18;
+    public static final int kIntakeID = 19;
+
 
     // Current limit for drivetrain motors
     public static final int kCurrentLimit = 60;
