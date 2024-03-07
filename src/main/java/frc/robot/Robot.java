@@ -4,26 +4,19 @@
 
 package frc.robot;
 
+import com.ctre.phoenix.motorcontrol.TalonSRXControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkMaxPIDController;
-
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj.DigitalInput;
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.SparkMaxPIDController;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
-import com.revrobotics.RelativeEncoder;
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.TalonSRXControlMode;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+
 
 
 
@@ -75,7 +68,7 @@ public class Robot extends TimedRobot {
 
   boolean noteLoaded = false;
 
-
+  boolean driveDir = true;
 
   // private RobotContainer m_robotContainer;
 
@@ -159,6 +152,8 @@ public class Robot extends TimedRobot {
     SmartDashboard.putBoolean("precisonMode", precisonMode);
     SmartDashboard.putNumber("climber encoder position", climber.getEncoder().getPosition());
     SmartDashboard.putBoolean("shooter loaded?", !noteSensor.get());
+    SmartDashboard.putNumber("Auton timer", autoTimer.get());
+    SmartDashboard.putNumber("shooter delay timer", shooterDelay.get());
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
@@ -171,6 +166,8 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
+    autoTimer.reset();
+    autoTimer.start();
     // m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
     // // schedule the autonomous command (example)
@@ -182,26 +179,78 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
-  
-//     if (autoTimer.get() < 1)
-//     rightFront.set(-0.10);
-//     rightRear.set(-0.10);
-//     leftFront.set(-0.10);
-//     leftRear.set(-10);
-//     else
-//    {rightFront.set(0);  
-//           leftFront.set(0);
-//  if (autoTimer.get() < 1 && shooterDelay.get() > 0.3){
-//       shooter1.set(TalonSRXControlMode.PercentOutput, 1);
-//       shooter2.set(TalonSRXControlMode.PercentOutput, 1);
+  if (autoTimer.get() < 2) { //Starts shooter
+  shooter1.set(TalonSRXControlMode.PercentOutput, 1);
+  shooterDelay.start();
+  if (shooterDelay.get() > 0.4) { //Shoots pre-loaded note
+      shooter2.set(TalonSRXControlMode.PercentOutput, 1);
+      shooterDelay.reset();
+    } else {
+      shooterDelayReached = false;
+    }
+  } else if (autoTimer.get() < 4) { //Parks
+    shooter1.set(TalonSRXControlMode.PercentOutput, 0);
+    shooter2.set(TalonSRXControlMode.PercentOutput, 0);
+      rightFront.set(-0.10);
+      rightRear.set(-0.10);
+      leftFront.set(-0.10);
+      leftRear.set(-0.10);
+  // } else {
+  //   rightFront.set(0);
+  //   rightRear.set(0);
+  //   leftFront.set(0);
+  //   leftRear.set(0);
+  // Experimental code vvv
+  } else if (autoTimer.get() < 6 ) { //Retrieves second note through floor intake
+      rightFront.set(-0.10);
+      rightRear.set(-0.10);
+      leftFront.set(-0.10);
+      leftRear.set(-0.10);
+      intake.set(-0.6);
+      } else if (autoTimer.get() < 7 ) { //Goes back to score
+        rightFront.set(0.2);
+        rightRear.set(0.2);
+        leftFront.set(0.2);
+        leftRear.set(0.2);
+        intake.set(0);
+      } else if (autoTimer.get() < 11) { //Shoots second note
+        rightFront.set(0);
+        rightRear.set(0);
+        leftFront.set(0);
+        leftRear.set(0);        
+        shooter1.set(TalonSRXControlMode.PercentOutput, 1);
+        shooterDelay.start();
+        if (shooterDelay.get() > 0.5) { 
+            shooter2.set(TalonSRXControlMode.PercentOutput, 1);
+          } else {
+            shooterDelayReached = false;
+          }
+        } else if (autoTimer.get() < 12) { //Parks
+          rightFront.set(-0.10);
+          rightRear.set(-0.10);
+          leftFront.set(-0.10);
+          leftRear.set(-0.10);
+      } else if (autoTimer.get() > 12.01) {
+        shooter1.set(TalonSRXControlMode.PercentOutput, 0);
+        shooter2.set(TalonSRXControlMode.PercentOutput, 0);
+        rightFront.set(0);
+        rightRear.set(0);
+        leftFront.set(0);
+        leftRear.set(0);
+    }
+
+}
+
+// shooterDelay.start();
+//     if (shooterDelay.get() > 0.5){
+//       shooterDelayReached = true;
 //     }
-//       else {shooter1.set(TalonSRXControlMode.PercentOutput, 0);
-//             shooter2.set(TalonSRXControlMode.PercentOutput, 0);
-//     autoTimer.reset();
-//     autoTimer.start();
-//       }
-//   }
-  }
+//     else {
+//       shooterDelayReached = false;
+//     }
+
+
+  
   @Override
   public void teleopInit() {
     // This makes sure that the autonomous stops running when
@@ -230,26 +279,26 @@ public class Robot extends TimedRobot {
 
     /*start of arcade drive */
 
-    if ((precisonMode == false) && (driver.getRawButton(7))) {
-        precisonMode = true;
-    }
-    else if ((precisonMode == true) && (driver.getRawButton(7))) {
-        precisonMode = false;
-    }
-    if (precisonMode) {
-      if (Math.abs(driver.getLeftY()) > 0.1){
-        leftFront.set(-1*precisionSpeed*driver.getLeftY());
-        rightFront.set(-1*precisionSpeed*driver.getLeftY());
-      }
-      else if (Math.abs(driver.getRightX()) > 0.1){
-        leftFront.set(-1*precisionSpeed*driver.getRightX());
-        rightFront.set(precisionSpeed*driver.getRightX());
-      }
-      else {
-        leftFront.set(0);
-        rightFront.set(0);
-      }
-    } else {
+    // if ((precisonMode == false) && (driver.getRawButton(7))) {
+    //     precisonMode = true;
+    // }
+    // else if ((precisonMode == true) && (driver.getRawButton(7))) {
+    //     precisonMode = false;
+    // }
+    // if (precisonMode) {
+    //   if (Math.abs(driver.getLeftY()) > 0.1){
+    //     leftFront.set(-1*precisionSpeed*driver.getLeftY());
+    //     rightFront.set(-1*precisionSpeed*driver.getLeftY());
+    //   }
+    //   else if (Math.abs(driver.getRightX()) > 0.1){
+    //     leftFront.set(-1*precisionSpeed*driver.getRightX());
+    //     rightFront.set(precisionSpeed*driver.getRightX());
+    //   }
+    //   else {
+    //     leftFront.set(0);
+    //     rightFront.set(0);
+    //   }
+    // } else {
   
       //ABDULLAH DRIVE CODE
 
@@ -257,7 +306,8 @@ public class Robot extends TimedRobot {
         
         if (Math.abs(driver.getRightX()) > 0.1) { //If we are trying to move + turn (CURVE)
           
-          if (driver.getLeftY() < 0) {
+          if (driver.getLeftY() < 0) { //Curving FORWARDS
+            driveDir = true;
             if (driver.getRightX() > 0) { //If we are trying to curve RIGHT
 
               rightFront.set(driver.getRightX()/3);
@@ -268,6 +318,7 @@ public class Robot extends TimedRobot {
               leftFront.set(Math.abs(driver.getRightX()/3));
             }
           } else { //If we are trying to curve BACKWARDS
+            driveDir = false;
             if (driver.getRightX() > 0) { //If we are trying to curve RIGHT
 
               rightFront.set(-driver.getRightX()/3);
@@ -279,21 +330,26 @@ public class Robot extends TimedRobot {
             }
           }
         } else { //If we are trying NOT trying to turn (FORWARD/BACKWARD)
-
+          driveDir = true;
           leftFront.set(-driver.getLeftY()/4);
           rightFront.set(-driver.getLeftY()/4);
         }
       } else if (Math.abs(driver.getRightX()) > 0.1) { //If we are trying to ROTATE (LEFT/RIGHT)
-
-          rightFront.set(driver.getRightX()/4);
-          leftFront.set(-driver.getRightX()/4);
+          if (driveDir) {
+            rightFront.set(driver.getRightX()/4);
+            leftFront.set(-driver.getRightX()/4);
+          } else {
+            rightFront.set(-driver.getRightX()/4);
+            leftFront.set(driver.getRightX()/4);
+          }
+          
       } else { //If we are trying NOT trying to move (STATIONARY)
 
           leftFront.set(0);
           rightFront.set(0);
       } 
 
-    }
+
 
   //   /*end of arcade drive */
 
@@ -308,7 +364,7 @@ public class Robot extends TimedRobot {
   else if (driver.getRawButton(6)){
     shooter1.set(TalonSRXControlMode.PercentOutput, 1);
     shooterDelay.start();
-    if (shooterDelay.get() > 0.4){
+    if (shooterDelay.get() > 0.5){
       shooterDelayReached = true;
     }
     else {
@@ -327,7 +383,6 @@ public class Robot extends TimedRobot {
   else {
     shooter1.set(TalonSRXControlMode.PercentOutput, 0);
     shooter2.set(TalonSRXControlMode.PercentOutput, 0);
-        SmartDashboard.putNumber("shooter delay timer", shooterDelay.get());
     shooterDelay.reset();
     shooterDelayReached = false;
   }
@@ -337,7 +392,7 @@ public class Robot extends TimedRobot {
      } else if (driver.getRawButton(3)){
     amp.set(TalonSRXControlMode.PercentOutput,0.35);
   }
-  // This section is for 
+  // This section is for ____ idk what this is - atharv
     else {
     amp.set(TalonSRXControlMode.PercentOutput,0);
     }
@@ -345,22 +400,24 @@ public class Robot extends TimedRobot {
 
   //Climber code
    if (driver.getPOV()==0){
-  climber.set(1);
+  climber.set(-1);
    }
-  else if (driver.getPOV()==180){
-    climber.set(-1);
-  
-   }  else {
+  else if (driver.getPOV()==180) {
+    climber.set(1);
+  }  else {
   climber.set(0);
    }
 
   //intake code by yours truly srihan
 
-  if (driver.getRightTriggerAxis()>0.2){
+  if (driver.getRightTriggerAxis() > 0.2) {
+
     intake.set(-0.6);
-     } else if (driver.getLeftTriggerAxis()>0.2){
+  } else if (driver.getLeftTriggerAxis() > 0.2) {
+
     intake.set(0.4);
   }  else {
+// we should move the intake to the operator controller
     intake.set(0);
   }
 
